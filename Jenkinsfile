@@ -68,15 +68,16 @@ pipeline {
             }
         }
 
- stage('Deploy to EC2') {
+stage('Deploy to EC2') {
   steps {
-    sshagent(['SSH_KEY_ACCESS']) {  // your Jenkins credential ID
+    sshagent(['SSH_KEY_ACCESS']) {
       sh """
         ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
-          "docker stop react-devops-app || true && \\
+          "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 782636843432.dkr.ecr.us-east-1.amazonaws.com && \\
+           docker stop react-devops-app || true && \\
            docker rm react-devops-app || true && \\
-           docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \\
-           docker run -d --name react-devops-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
+           docker pull 782636843432.dkr.ecr.us-east-1.amazonaws.com/react-devops-app:latest && \\
+           docker run -d --name react-devops-app -p 80:80 782636843432.dkr.ecr.us-east-1.amazonaws.com/react-devops-app:latest"
       """
     }
   }
