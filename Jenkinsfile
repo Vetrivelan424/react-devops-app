@@ -68,13 +68,17 @@ pipeline {
             }
         }
 
-    stage('Deploy to EC2') {
+   stage('Deploy to EC2') {
   steps {
     script {
-      // write the private key exactly as stored, preserving format
-      writeFile file: 'deploy_key.pem', text: SSH_PRIVATE_KEY
+      // Fix literal \n in key if present
+      def fixedKey = SSH_PRIVATE_KEY.replace('\\n', '\n')
+      writeFile file: 'deploy_key.pem', text: fixedKey
 
       sh 'chmod 600 deploy_key.pem'
+
+      // Debug print
+      sh 'head -20 deploy_key.pem'
 
       sh """
         ssh -i deploy_key.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
@@ -88,6 +92,7 @@ pipeline {
     }
   }
 }
+
 
 
     }
