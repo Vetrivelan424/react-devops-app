@@ -75,7 +75,7 @@ pipeline {
         sh 'chmod 600 user_management.pem'
 
         sh """
-            ssh -i deploy_key.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
+            ssh -i user_management.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
             "docker stop react-app || true && \
              docker rm react-app || true && \
              docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \
