@@ -21,8 +21,8 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-             npm install pnpm --legacy-peer-deps
-             npx pnpm install --no-strict-peer-dependencies
+             npm install pnpm 
+             npx pnpm install 
                 '''
             }
         }
