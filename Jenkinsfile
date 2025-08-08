@@ -39,6 +39,20 @@ pipeline {
             }
         }
 
+        stage('Install AWS CLI') {
+            steps {
+                sh '''
+                if ! command -v aws &> /dev/null
+                then
+                    echo "Installing AWS CLI..."
+                    sudo apt-get update -y
+                    sudo apt-get install -y awscli
+                else
+                    echo "AWS CLI already installed."
+                fi
+                '''
+            }
+        }
         stage('Login to ECR') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
