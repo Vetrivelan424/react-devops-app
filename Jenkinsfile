@@ -68,32 +68,19 @@ pipeline {
             }
         }
 
-   stage('Deploy to EC2') {
+  stage('Deploy to EC2') {
   steps {
-    script {
-      // Fix literal \n in key if present
-      def fixedKey = SSH_PRIVATE_KEY.replace('\\n', '\n')
-      writeFile file: 'deploy_key.pem', text: fixedKey
-
-      sh 'chmod 600 deploy_key.pem'
-
-      // Debug print
-      sh 'head -20 deploy_key.pem'
-
+    sshagent(['SSH_KEY_ACCESS']) {  // use your credential ID here
       sh """
-        ssh -i deploy_key.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
-        "docker stop react-app || true && \
-         docker rm react-app || true && \
-         docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \
-         docker run -d --name react-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
+        ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
+          "docker stop react-app || true && \
+           docker rm react-app || true && \
+           docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \
+           docker run -d --name react-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
       """
-
-      sh 'rm -f deploy_key.pem'
     }
   }
 }
-
-
 
     }
 
