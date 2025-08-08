@@ -28,10 +28,10 @@ pipeline {
         }
 
         stage('Run Tests') {
-            steps {
-                sh 'pnpm test -- --watchAll=false'
-            }
-        }
+           steps {
+              sh 'pnpm run test --watchAll=false'
+           }
+          }
 
         stage('Build Application') {
             steps {
