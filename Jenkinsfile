@@ -21,7 +21,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-             npm install pnpm 
+             pnpm install --no-frozen-lockfile
              npx pnpm install 
                 '''
             }
