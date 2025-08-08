@@ -71,11 +71,11 @@ pipeline {
           stage('Deploy to EC2') {
     steps {
         // write SSH key content to file
-        writeFile file: 'user_management.pem', text: "${SSH_KEY}"
-        sh 'chmod 600 user_management.pem'
+        writeFile file: 'ssh_key.pem', text: "${SSH_KEY}"
+        sh 'chmod 600 ssh_key.pem'
 
         sh """
-            ssh -i user_management.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
+            ssh -i ssh_key.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
             "docker stop react-app || true && \
              docker rm react-app || true && \
              docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \
@@ -83,7 +83,7 @@ pipeline {
         """
 
         // optionally delete the key file after deploy
-        sh 'rm -f user_management.pem'
+        sh 'rm -f ssh_key.pem'
     }
 }
 
