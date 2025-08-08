@@ -77,12 +77,20 @@ pipeline {
                     sh '''
                         # Set correct permissions
                         chmod 600 deploy_key.pem
-                        
+
+                          echo "=== SSH Key Debug Info ==="
+                        ls -la deploy_key.pem
+                        echo "First 3 lines of key:"
+                        head -3 deploy_key.pem
+                        echo "Last 3 lines of key:"
+                        tail -3 deploy_key.pem
+                        echo "File type:"
+                        file deploy_key.pem
                         # Test SSH connection
-                        ssh -o StrictHostKeyChecking=no -i deploy_key.pem ${AWS_ACCOUNT_ID}@${APP_SERVER_IP} 'whoami && pwd'
+                        ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@${APP_SERVER_IP} 'whoami && pwd'
                         
                         # Your deployment commands
-                        ssh -i deploy_key.pem ${AWS_ACCOUNT_ID}@${APP_SERVER_IP} '
+                        ssh -i deploy_key.pem ubuntu@${APP_SERVER_IP} '
                             sudo docker pull your-image
                             sudo docker stop your-container || true
                             sudo docker run -d --name your-container your-image
