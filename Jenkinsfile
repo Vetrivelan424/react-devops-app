@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION       = "us-east-1" // Change to your region
-        AWS_ACCOUNT_ID   = "123456789012" // Change to your AWS account ID
+        AWS_ACCOUNT_ID   = "782636843432" // Change to your AWS account ID
         ECR_REPO         = "react-devops-app" // Your ECR repo name
         DOCKER_TAG       = "${BUILD_NUMBER}"
         DOCKER_REGISTRY  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
