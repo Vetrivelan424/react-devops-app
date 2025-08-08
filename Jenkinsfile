@@ -76,19 +76,26 @@ pipeline {
                     
                     sh '''
                         # Set correct permissions
-                        chmod 600 deploy_key.pem
-
-                          echo "=== SSH Key Debug Info ==="
-                        ls -la deploy_key.pem
-                        echo "First 3 lines of key:"
-                        head -3 deploy_key.pem
-                        echo "Last 3 lines of key:"
-                        tail -3 deploy_key.pem
-                        echo "File type:"
-                        file deploy_key.pem
-                        # Test SSH connection
-                        ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@${APP_SERVER_IP} 'whoami && pwd'
-                        
+                      chmod 600 deploy_key.pem
+    
+    # Remove any hidden characters and fix format
+    sed -i 's/\r$//' deploy_key.pem                    # Remove Windows line endings
+    sed -i '/^$/d' deploy_key.pem                      # Remove empty lines
+    sed -i 's/[[:space:]]*$//' deploy_key.pem          # Remove trailing spaces
+    
+    # Ensure proper line endings for PEM format
+    awk 'BEGIN{print "-----BEGIN RSA PRIVATE KEY-----"} 
+         /-----BEGIN RSA PRIVATE KEY-----/{next} 
+         /-----END RSA PRIVATE KEY-----/{next} 
+         {print} 
+         END{print "-----END RSA PRIVATE KEY-----"}' deploy_key.pem > deploy_key_fixed.pem
+    
+    # Use the cleaned key
+    mv deploy_key_fixed.pem deploy_key.pem
+    chmod 600 deploy_key.pem
+    
+    # Test the cleaned key
+    ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@34.224.102.185 'whoami && pwd'
                         # Your deployment commands
                         ssh -i deploy_key.pem ubuntu@${APP_SERVER_IP} '
                             sudo docker pull your-image
