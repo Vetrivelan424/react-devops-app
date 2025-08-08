@@ -21,8 +21,8 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    npm install -g pnpm
-                    pnpm install
+                   npm install pnpm
+                   npx pnpm install
                 '''
             }
         }
