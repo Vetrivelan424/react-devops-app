@@ -8,7 +8,7 @@ pipeline {
         DOCKER_TAG       = "${BUILD_NUMBER}"
         DOCKER_REGISTRY  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         APP_SERVER_IP    = "${APP_SERVER_IP}" // Set from Jenkins configuration
-        SSH_KEY          = credentials('ec2-ssh-key') // Jenkins credential ID for SSH key
+        SSH_PRIVATE_KEY  = credentials('ec2-ssh-key') // Jenkins credential ID for SSH key
     }
 
     stages {
@@ -68,29 +68,36 @@ pipeline {
             }
         }
 
-          stage('Deploy to EC2') {
-   steps {
-    // write SSH key content to file with proper newlines
-    writeFile file: 'user_access.pem', text: "${SSH_KEY.replace('\\n', '\n')}"
-    sh 'chmod 600 user_access.pem'
-    
-    // print key content for debugging (remove this in production)
-    sh 'echo "SSH key file content:" && cat user_access.pem'
-
-    sh """
-        ssh -i user_access.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
-        "docker stop react-app || true && \\
-         docker rm react-app || true && \\
-         docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \\
-         docker run -d --name react-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
-    """
-
-    // optionally delete the key file after deploy
-    sh 'rm -f user_access.pem'
-}
-
-}
-
+        stage('Deploy to EC2') {
+            steps {
+                script {
+                    // Write SSH key securely (no string interpolation)
+                    writeFile file: 'deploy_key.pem', text: SSH_PRIVATE_KEY 
+                    
+                    sh '''
+                        # Set correct permissions
+                        chmod 600 deploy_key.pem
+                        
+                        # Test SSH connection
+                        ssh -o StrictHostKeyChecking=no -i deploy_key.pem ${AWS_ACCOUNT_ID}@${APP_SERVER_IP} 'whoami && pwd'
+                        
+                        # Your deployment commands
+                        ssh -i deploy_key.pem ${AWS_ACCOUNT_ID}@${APP_SERVER_IP} '
+                            sudo docker pull your-image
+                            sudo docker stop your-container || true
+                            sudo docker run -d --name your-container your-image
+                        '
+                    '''
+                }
+            }
+            
+            post {
+                always {
+                    // Always clean up SSH key
+                    sh 'rm -f deploy_key.pem'
+                }
+            }
+        }
     }
 
     post {
