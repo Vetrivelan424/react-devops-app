@@ -39,20 +39,21 @@ pipeline {
             }
         }
 
-        stage('Install AWS CLI') {
-            steps {
-                sh '''
-                if ! command -v aws &> /dev/null
-                then
-                    echo "Installing AWS CLI..."
-                    sudo apt-get update -y
-                    sudo apt-get install -y awscli
-                else
-                    echo "AWS CLI already installed."
-                fi
-                '''
-            }
-        }
+       stage('Install AWS CLI') {
+    steps {
+        sh '''
+        if ! command -v aws &> /dev/null
+        then
+            echo "Installing AWS CLI locally..."
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            ./aws/install --bin-dir ./bin --install-dir ./aws-cli --update
+            export PATH=$PATH:$(pwd)/bin
+        fi
+        '''
+    }
+}
+
         stage('Login to ECR') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
