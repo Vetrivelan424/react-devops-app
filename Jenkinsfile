@@ -73,10 +73,10 @@ pipeline {
     sshagent(['SSH_KEY_ACCESS']) {  // use your credential ID here
       sh """
         ssh -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
-          "docker stop react-app || true && \
-           docker rm react-app || true && \
+          "docker stop react-devops-app || true && \
+           docker rm react-devops-app || true && \
            docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \
-           docker run -d --name react-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
+           docker run -d --name react-devops-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
       """
     }
   }
