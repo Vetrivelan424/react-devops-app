@@ -8,7 +8,7 @@ pipeline {
         DOCKER_TAG       = "${BUILD_NUMBER}"
         DOCKER_REGISTRY  = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         APP_SERVER_IP    = "${APP_SERVER_IP}" // Set from Jenkins configuration
-        SSH_PRIVATE_KEY  = credentials('ec2-ssh-key') // Jenkins credential ID for SSH key
+        SSH_PRIVATE_KEY  = credentials('SSH_KEY_ACCESS') // Jenkins credential ID for SSH key
     }
 
     stages {
@@ -71,34 +71,22 @@ pipeline {
         stage('Deploy to EC2') {
     steps {
         script {
-            // Write SSH key as-is
-            writeFile file: 'deploy_key.pem', text: SSH_PRIVATE_KEY
-            
-            sh '''
-                # Fix line endings and trailing spaces (no header/footer changes)
-                sed -i 's/\r$//' deploy_key.pem
-                sed -i '/^$/d' deploy_key.pem
-                sed -i 's/[[:space:]]*$//' deploy_key.pem
-                
-                chmod 600 deploy_key.pem
-                
-                # Test the key
-                ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@${APP_SERVER_IP} 'whoami && pwd'
-                
-                # Run deployment commands
-                ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@${APP_SERVER_IP} '
-                    sudo docker pull your-image
-                    sudo docker stop your-container || true
-                    sudo docker run -d --name your-container your-image
-                '
-            '''
+             writeFile file: 'user_management.pem', text: "${SSH_PRIVATE_KEY}"
+        sh 'chmod 600 user_management.pem'
+
+        sh """
+            ssh -i deploy_key.pem -o StrictHostKeyChecking=no ubuntu@${APP_SERVER_IP} \\
+            "docker stop react-app || true && \
+             docker rm react-app || true && \
+             docker pull $DOCKER_REGISTRY/$ECR_REPO:latest && \
+             docker run -d --name react-app -p 80:80 $DOCKER_REGISTRY/$ECR_REPO:latest"
+        """
+
+        // optionally delete the key file after deploy
+        sh 'rm -f user_management.pem'
         }
     }
-    post {
-        always {
-            sh 'rm -f deploy_key.pem'
-        }
-    }
+ 
 }
 
     }
