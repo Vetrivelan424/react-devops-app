@@ -69,50 +69,38 @@ pipeline {
         }
 
         stage('Deploy to EC2') {
-            steps {
-                script {
-                    // Write SSH key securely (no string interpolation)
-                    writeFile file: 'deploy_key.pem', text: SSH_PRIVATE_KEY 
-                    
-                    sh '''
-                        # Set correct permissions
-                      chmod 600 deploy_key.pem
-    
-    # Remove any hidden characters and fix format
-    sed -i 's/\r$//' deploy_key.pem                    # Remove Windows line endings
-    sed -i '/^$/d' deploy_key.pem                      # Remove empty lines
-    sed -i 's/[[:space:]]*$//' deploy_key.pem          # Remove trailing spaces
-    
-    # Ensure proper line endings for PEM format
-    awk 'BEGIN{print "-----BEGIN RSA PRIVATE KEY-----"} 
-         /-----BEGIN RSA PRIVATE KEY-----/{next} 
-         /-----END RSA PRIVATE KEY-----/{next} 
-         {print} 
-         END{print "-----END RSA PRIVATE KEY-----"}' deploy_key.pem > deploy_key_fixed.pem
-    
-    # Use the cleaned key
-    mv deploy_key_fixed.pem deploy_key.pem
-    chmod 600 deploy_key.pem
-    
-    # Test the cleaned key
-    ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@34.224.102.185 'whoami && pwd'
-                        # Your deployment commands
-                        ssh -i deploy_key.pem ubuntu@${APP_SERVER_IP} '
-                            sudo docker pull your-image
-                            sudo docker stop your-container || true
-                            sudo docker run -d --name your-container your-image
-                        '
-                    '''
-                }
-            }
+    steps {
+        script {
+            // Write SSH key as-is
+            writeFile file: 'deploy_key.pem', text: SSH_PRIVATE_KEY
             
-            post {
-                always {
-                    // Always clean up SSH key
-                    sh 'rm -f deploy_key.pem'
-                }
-            }
+            sh '''
+                # Fix line endings and trailing spaces (no header/footer changes)
+                sed -i 's/\r$//' deploy_key.pem
+                sed -i '/^$/d' deploy_key.pem
+                sed -i 's/[[:space:]]*$//' deploy_key.pem
+                
+                chmod 600 deploy_key.pem
+                
+                # Test the key
+                ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@${APP_SERVER_IP} 'whoami && pwd'
+                
+                # Run deployment commands
+                ssh -o StrictHostKeyChecking=no -i deploy_key.pem ubuntu@${APP_SERVER_IP} '
+                    sudo docker pull your-image
+                    sudo docker stop your-container || true
+                    sudo docker run -d --name your-container your-image
+                '
+            '''
         }
+    }
+    post {
+        always {
+            sh 'rm -f deploy_key.pem'
+        }
+    }
+}
+
     }
 
     post {
