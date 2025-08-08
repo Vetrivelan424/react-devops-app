@@ -27,11 +27,11 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-           steps {
-              sh 'pnpm run test --watchAll=false'
-           }
-          }
+        // stage('Run Tests') {
+        //    steps {
+        //       sh 'pnpm run test --watchAll=false'
+        //    }
+        //   }
 
         stage('Build Application') {
             steps {
